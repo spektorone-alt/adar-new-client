@@ -180,6 +180,16 @@
   .toast.err{background:var(--err);}
   .footer-note{text-align:center;font-size:11.5px;color:var(--muted);margin:18px 0 8px;}
   .req::after{content:" *";color:var(--err);}
+.pdf-section{margin-bottom:18px;}
+.pdf-section-title{font-size:14px;font-weight:800;color:var(--maroon-dark);border-bottom:1.5px solid var(--line);padding-bottom:6px;margin-bottom:10px;}
+.pdf-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;font-size:13px;}
+.pdf-grid > div{display:flex;justify-content:space-between;border-bottom:1px dotted var(--line);padding-bottom:4px;}
+.pdf-grid .k{color:var(--muted);}
+.pdf-grid .v{font-weight:700;}
+.pdf-table{width:100%;border-collapse:collapse;font-size:12px;}
+.pdf-table th{background:var(--maroon);color:#fff;padding:6px 8px;text-align:right;font-weight:700;}
+.pdf-table td{padding:6px 8px;border-bottom:1px solid var(--line);}
+.pdf-table tr:nth-child(even) td{background:#FAF6EF;}
 </style>
 </head>
 <body>
@@ -364,6 +374,63 @@
   </div>
 
   <div class="footer-note">facebook.com/Batsekim &nbsp;|&nbsp; www.batsekim.co.il &nbsp;|&nbsp; טלפון: 08-9963993</div>
+</div>
+
+<div id="pdfTemplate" style="position:absolute;left:-99999px;top:0;width:794px;background:#fff;direction:rtl;padding:36px 40px;box-sizing:border-box;">
+  <div style="display:flex;align-items:center;gap:16px;border-bottom:3px solid var(--maroon);padding-bottom:16px;margin-bottom:20px;">
+    <img id="pdf-logo-img" src="" alt="אדר בצקים" style="width:70px;height:70px;">
+    <div>
+      <div style="font-size:22px;font-weight:800;color:var(--maroon-dark);">אדר בצקים בע״מ</div>
+      <div style="font-size:12px;color:var(--muted);">ח.פ 515955938 · רח׳ המתכת 38, אשדוד</div>
+    </div>
+    <div style="margin-right:auto;text-align:left;">
+      <div style="font-size:16px;font-weight:700;color:var(--maroon);">נספח א׳</div>
+      <div style="font-size:11px;color:var(--muted);" id="pdf-doc-date"></div>
+    </div>
+  </div>
+  <div style="font-size:18px;font-weight:800;text-align:center;color:var(--maroon-dark);margin-bottom:20px;">סיכום מוצרים ומחירים עם לקוח</div>
+
+  <div class="pdf-section">
+    <div class="pdf-section-title">פרטי הלקוח</div>
+    <div class="pdf-grid" id="pdf-customer-grid"></div>
+  </div>
+
+  <div class="pdf-section">
+    <div class="pdf-section-title">מוצרים</div>
+    <table class="pdf-table" id="pdf-products-table"></table>
+  </div>
+
+  <div class="pdf-section" id="pdf-terms-section" style="display:none;">
+    <div class="pdf-section-title">תנאים כלליים</div>
+    <div id="pdf-terms-text" style="font-size:13px;white-space:pre-wrap;"></div>
+  </div>
+
+  <div class="pdf-section">
+    <div class="pdf-section-title">פרטי התקשרות ואספקה</div>
+    <div class="pdf-grid" id="pdf-logistics-grid"></div>
+  </div>
+
+  <div class="pdf-section">
+    <div class="pdf-section-title">תנאי תשלום</div>
+    <div class="pdf-grid" id="pdf-payment-grid"></div>
+  </div>
+
+  <div class="pdf-section">
+    <div class="pdf-section-title">אישור וחתימה</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">אני מאשר/ת כי הפרטים לעיל נכונים, ומתחייב/ת לעמוד בתנאי התשלום וההתקשרות שנקבעו עם החברה.</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:20px;">
+      <div>
+        <div style="font-size:12px;color:var(--muted);">שם לקוח לחתימה</div>
+        <div style="font-size:15px;font-weight:700;" id="pdf-signer-name"></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;" id="pdf-sign-date"></div>
+      </div>
+      <img id="pdf-signature-img" style="max-width:220px;max-height:80px;border-bottom:1px solid var(--line);">
+    </div>
+  </div>
+
+  <div style="margin-top:24px;padding-top:12px;border-top:1px solid var(--line);text-align:center;font-size:11px;color:var(--muted);">
+    facebook.com/Batsekim &nbsp;|&nbsp; www.batsekim.co.il &nbsp;|&nbsp; טלפון: 08-9963993
+  </div>
 </div>
 
 <div class="actionbar">
@@ -816,9 +883,83 @@ function showToast(msg, isErr = false) {
 }
 
 // ==== הפקת PDF ====
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function gridRow(k, v) {
+  if (!v) return '';
+  return `<div><span class="k">${escapeHtml(k)}</span><span class="v">${escapeHtml(v)}</span></div>`;
+}
+function populatePdfTemplate(d) {
+  document.getElementById('pdf-logo-img').src = document.querySelector('.badge').src;
+  document.getElementById('pdf-doc-date').textContent = 'תאריך: ' + (d.formDate || '');
+
+  const custRows = [
+    gridRow('שם לקוח / עסק', d.customerName),
+    gridRow('ח.פ / עוסק מורשה', d.customerBusinessId),
+    gridRow('איש קשר', d.contactName),
+    gridRow('טלפון', d.contactPhone),
+    gridRow('מייל', d.customerEmail),
+    gridRow('כתובת', d.customerAddress),
+  ].join('');
+  document.getElementById('pdf-customer-grid').innerHTML = custRows;
+
+  const prodHeader = `<tr><th>#</th><th>שם מוצר</th><th>חומר גלם</th><th>משקל (גרם)</th><th>אפוי</th><th>מידת אפייה</th><th>כמות חודשית</th><th>מחיר (₪)</th></tr>`;
+  const prodRows = (d.products || []).map((p, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>${escapeHtml(p.name)}</td>
+      <td>${escapeHtml(p.rm)}</td>
+      <td>${escapeHtml(p.weight)}</td>
+      <td>${escapeHtml(p.baked)}</td>
+      <td>${escapeHtml(p.baked === 'כן' ? p.bakeLevel : '')}</td>
+      <td>${escapeHtml(p.qty)}</td>
+      <td>${escapeHtml(p.price)}</td>
+    </tr>`).join('');
+  document.getElementById('pdf-products-table').innerHTML = prodHeader + prodRows;
+
+  const termsSection = document.getElementById('pdf-terms-section');
+  if (d.generalTerms) {
+    termsSection.style.display = 'block';
+    document.getElementById('pdf-terms-text').textContent = d.generalTerms;
+  } else {
+    termsSection.style.display = 'none';
+  }
+
+  const logisticsRows = [
+    gridRow('תחילת עבודה', d.workStart),
+    gridRow('משך התקשרות', d.contractMonths ? d.contractMonths + ' חודשים' : ''),
+    gridRow('ימי אספקה', (d.days || []).join(', ')),
+    gridRow('שעות מועדפות', d.preferredHours),
+    gridRow('כתובת משלוח', d.sameAddress === false ? d.deliveryAddress : ''),
+  ].join('');
+  document.getElementById('pdf-logistics-grid').innerHTML = logisticsRows;
+
+  const paymentRows = [
+    gridRow('אמצעי תשלום', d.paymentMethod),
+    gridRow('שוטף', d.paymentDays ? '+' + d.paymentDays + ' ימים' : ''),
+    gridRow('בעל כרטיס', d.cardHolder),
+    gridRow('4 ספרות אחרונות', d.cardLast4),
+    gridRow('תוקף כרטיס', d.cardExpiry),
+  ].join('');
+  document.getElementById('pdf-payment-grid').innerHTML = paymentRows;
+
+  document.getElementById('pdf-signer-name').textContent = d.signerName || '';
+  document.getElementById('pdf-sign-date').textContent = d.formDate ? 'תאריך: ' + d.formDate : '';
+  const sigImg = document.getElementById('pdf-signature-img');
+  if (d.signatureDataUrl) {
+    sigImg.src = d.signatureDataUrl;
+    sigImg.style.display = 'block';
+  } else {
+    sigImg.style.display = 'none';
+  }
+}
+
 async function generatePdf() {
-  const area = document.getElementById('captureArea');
-  const canvasImg = await html2canvas(area, { scale: 2, backgroundColor: '#FAF6EF', useCORS: true });
+  const d = collectData();
+  populatePdfTemplate(d);
+  const template = document.getElementById('pdfTemplate');
+  const canvasImg = await html2canvas(template, { scale: 2, backgroundColor: '#FFFFFF', useCORS: true });
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF('p', 'pt', 'a4');
   const pageW = pdf.internal.pageSize.getWidth();
