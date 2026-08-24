@@ -78,7 +78,7 @@
     display:block;font-size:13px;font-weight:600;color:var(--ink);
     margin-bottom:5px;
   }
-  input[type=text],input[type=number],input[type=date],input[type=time],input[type=email],textarea,select{
+  input[type=text],input[type=number],input[type=date],input[type=time],input[type=email],input[type=tel],textarea,select{
     width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:9px;
     font-family:'Assistant',sans-serif;font-size:14.5px;color:var(--ink);
     background:#FFFDFA;transition:border-color .15s;
@@ -88,12 +88,13 @@
   .row3{display:grid;grid-template-columns:1fr;gap:10px;}
   .row2{display:grid;grid-template-columns:1fr;gap:10px;}
   .addr-row{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:10px;}
+  .field-narrow{max-width:110px;}
   @media(min-width:480px){
     .row3{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);}
     .row2{grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
   }
   .field{min-width:0;}
-  input[type=text],input[type=number],input[type=date],input[type=time],input[type=email],textarea,select{
+  input[type=text],input[type=number],input[type=date],input[type=time],input[type=email],input[type=tel],textarea,select{
     min-width:0;max-width:100%;
   }
   .toggle-group{display:flex;gap:8px;}
@@ -117,6 +118,14 @@
     position:absolute;top:-11px;left:12px;background:var(--err);color:#fff;
     border:none;border-radius:20px;font-size:12px;padding:2px 10px;cursor:pointer;
   }
+  .product-summary{
+    display:none;align-items:center;justify-content:space-between;
+    cursor:pointer;padding:4px 2px;font-size:14px;font-weight:700;color:var(--maroon);
+  }
+  .product-summary .arrow{font-size:12px;opacity:.7;}
+  .product.collapsed .product-body{display:none;}
+  .product.collapsed .product-summary{display:flex;}
+  .product.collapsed{padding-top:16px;padding-bottom:10px;}
   .add-btn{
     width:100%;padding:11px;border:1.5px dashed var(--maroon);border-radius:10px;
     background:transparent;color:var(--maroon);font-weight:700;font-size:14px;cursor:pointer;
@@ -191,6 +200,10 @@
       <label class="req">שם הלקוח / העסק</label>
       <input type="text" id="customerName" placeholder="לדוגמה: מאפיית השכונה בע״מ">
     </div>
+    <div class="field">
+      <label>ח.פ / עוסק מורשה</label>
+      <input type="text" id="customerBusinessId" inputmode="numeric" placeholder="מספר ח.פ / עוסק מורשה">
+    </div>
     <div class="row2">
       <div class="field">
         <label>איש קשר</label>
@@ -198,7 +211,7 @@
       </div>
       <div class="field">
         <label>טלפון</label>
-        <input type="text" id="contactPhone">
+        <input type="tel" id="contactPhone" inputmode="tel">
       </div>
     </div>
     <div class="field">
@@ -218,7 +231,7 @@
       </div>
       <div class="field">
         <label>מספר</label>
-        <input type="text" id="customerHouseNum" placeholder="5">
+        <input type="text" id="customerHouseNum" inputmode="numeric" placeholder="5">
       </div>
     </div>
     <input type="hidden" id="formDate">
@@ -303,8 +316,12 @@
     </div>
     <div class="row2">
       <div class="field">
-        <label>שעות מועדפות</label>
-        <input type="text" id="preferredHours" placeholder="לדוגמה: 06:00–09:00">
+        <label>שעות מועדפות - משעה</label>
+        <input type="time" id="preferredHoursFrom">
+      </div>
+      <div class="field">
+        <label>שעות מועדפות - עד שעה</label>
+        <input type="time" id="preferredHoursTo">
       </div>
     </div>
     <div class="field">
@@ -368,7 +385,7 @@ const prodCountEl = document.getElementById('prodCount');
 let productSeq = 0;
 
 const RM_LIST = ["בצק קלאסי", "מחמצת", "ביגה", "פוליש", "מזונות", "מותג פרטי"];
-const SHAPE_LIST = ["כדור", "מלבן", "עגול", "אחר"];
+const PRODUCT_NAME_LIST = ["כדור", "בסיס פתוח קפוא", "בסיס משפחתי אפוי", "בסיס אישי אפוי", "פוקציה 70", "פוקציה 200", "לחם", "לאבשי", "אצבעות", "בסיס 40/20", "בסיס 30/15"];
 const BAKE_LEVELS = ["חצי אפוי", "כמעט מוכן", "אפוי סופי"];
 const WEIGHT_LIST = (() => {
   const arr = [];
@@ -395,9 +412,17 @@ function addProduct(data = {}) {
   div.innerHTML = `
     <span class="num">מוצר ${productSeq}</span>
     <button type="button" class="remove-btn" data-remove="${id}">הסר</button>
+    <div class="product-summary" data-toggle="${id}">
+      <span class="summary-text">מוצר ${productSeq}</span>
+      <span class="arrow">▼ הצג</span>
+    </div>
+    <div class="product-body">
     <div class="field">
       <label>שם המוצר</label>
-      <input type="text" class="f-name" value="${data.name||''}">
+      <input type="text" class="f-name" list="productNameList_${id}" value="${data.name||''}">
+      <datalist id="productNameList_${id}">
+        ${PRODUCT_NAME_LIST.map(n => `<option value="${n}">`).join('')}
+      </datalist>
     </div>
     <div class="row2">
       <div class="field">
@@ -408,15 +433,6 @@ function addProduct(data = {}) {
         </select>
       </div>
       <div class="field">
-        <label>צורה</label>
-        <select class="f-shape">
-          <option value="">בחר...</option>
-          ${optionsHtml(SHAPE_LIST, data.shape)}
-        </select>
-      </div>
-    </div>
-    <div class="row2">
-      <div class="field">
         <label>משקל (גרם)</label>
         <select class="f-weight">
           <option value="">בחר...</option>
@@ -425,9 +441,11 @@ function addProduct(data = {}) {
         </select>
         <input type="text" class="f-weight-custom" placeholder="הזן משקל בגרם" style="margin-top:6px;${isCustomWeight ? '' : 'display:none;'}" value="${isCustomWeight ? weightVal : ''}">
       </div>
+    </div>
+    <div class="row2">
       <div class="field">
         <label>כמות חודשית</label>
-        <input type="text" class="f-qty" value="${data.qty||''}">
+        <input type="text" class="f-qty" inputmode="numeric" value="${data.qty||''}">
       </div>
     </div>
     <div class="row2">
@@ -446,12 +464,22 @@ function addProduct(data = {}) {
         </select>
       </div>
     </div>
-    <div class="field"><label>מחיר (₪)</label><input type="text" class="f-price" value="${data.price||''}"></div>
+    <div class="field field-narrow"><label>מחיר (₪)</label><input type="text" class="f-price" inputmode="decimal" value="${data.price||''}"></div>
+    </div>
   `;
+  // מזערים את שאר המוצרים הקיימים כדי שלא יצטרכו לגלול דרך כולם
+  productsList.querySelectorAll('.product').forEach(el => el.classList.add('collapsed'));
   productsList.appendChild(div);
   renumber();
   scheduleDraftSave();
 }
+
+productsList.addEventListener('click', (e) => {
+  const summary = e.target.closest('.product-summary');
+  if (summary) {
+    summary.closest('.product').classList.toggle('collapsed');
+  }
+});
 
 productsList.addEventListener('change', (e) => {
   if (e.target.classList.contains('f-weight')) {
@@ -472,9 +500,24 @@ productsList.addEventListener('click', (e) => {
   scheduleDraftSave();
 });
 
+productsList.addEventListener('input', (e) => {
+  if (e.target.classList.contains('f-name')) {
+    const el = e.target.closest('.product');
+    const summaryTextEl = el.querySelector('.summary-text');
+    const num = el.querySelector('.num').textContent;
+    const nameVal = e.target.value.trim();
+    if (summaryTextEl) summaryTextEl.textContent = num + (nameVal ? ' — ' + nameVal : '');
+  }
+});
+
 function renumber() {
   const items = productsList.querySelectorAll('.product');
-  items.forEach((el, i) => { el.querySelector('.num').textContent = 'מוצר ' + (i + 1); });
+  items.forEach((el, i) => {
+    el.querySelector('.num').textContent = 'מוצר ' + (i + 1);
+    const nameVal = el.querySelector('.f-name').value.trim();
+    const summaryTextEl = el.querySelector('.summary-text');
+    if (summaryTextEl) summaryTextEl.textContent = 'מוצר ' + (i + 1) + (nameVal ? ' — ' + nameVal : '');
+  });
   prodCountEl.textContent = items.length;
 }
 
@@ -638,7 +681,6 @@ function collectData() {
     return {
       name: el.querySelector('.f-name').value,
       rm: el.querySelector('.f-rm').value,
-      shape: el.querySelector('.f-shape').value,
       weight,
       baked,
       bakeLevel: baked === 'כן' ? el.querySelector('.f-bakelevel').value : '',
@@ -649,6 +691,7 @@ function collectData() {
   const days = [...document.querySelectorAll('.day-chip input:checked')].map(cb => cb.value);
   return {
     customerName: document.getElementById('customerName').value,
+    customerBusinessId: document.getElementById('customerBusinessId').value,
     contactName: document.getElementById('contactName').value,
     contactPhone: document.getElementById('contactPhone').value,
     customerEmail: document.getElementById('customerEmail').value,
@@ -667,7 +710,11 @@ function collectData() {
     cardLast4: document.getElementById('cardLast4').value,
     cardExpiry: document.getElementById('cardExpiry').value,
     days,
-    preferredHours: document.getElementById('preferredHours').value,
+    preferredHours: (() => {
+      const from = document.getElementById('preferredHoursFrom').value;
+      const to = document.getElementById('preferredHoursTo').value;
+      return (from || to) ? `${from || '?'}–${to || '?'}` : '';
+    })(),
     sameAddress: sameAddressCheck.checked,
     deliveryAddress: document.getElementById('deliveryAddress').value,
     declare: document.getElementById('declareCheck').checked,
@@ -679,6 +726,7 @@ function collectData() {
 function applyData(d) {
   if (!d) return;
   document.getElementById('customerName').value = d.customerName || '';
+  document.getElementById('customerBusinessId').value = d.customerBusinessId || '';
   document.getElementById('contactName').value = d.contactName || '';
   document.getElementById('contactPhone').value = d.contactPhone || '';
   document.getElementById('customerEmail').value = d.customerEmail || '';
@@ -697,7 +745,11 @@ function applyData(d) {
   document.getElementById('cardExpiry').value = d.cardExpiry || '';
   toggleCardBlock();
   togglePaymentDays();
-  document.getElementById('preferredHours').value = d.preferredHours || '';
+  if (d.preferredHours) {
+    const parts = String(d.preferredHours).split('–');
+    document.getElementById('preferredHoursFrom').value = (parts[0] && parts[0] !== '?') ? parts[0] : '';
+    document.getElementById('preferredHoursTo').value = (parts[1] && parts[1] !== '?') ? parts[1] : '';
+  }
   sameAddressCheck.checked = d.sameAddress !== false;
   document.getElementById('deliveryAddress').value = d.deliveryAddress || '';
   syncDeliveryAddress();
