@@ -193,6 +193,9 @@
 <div class="wrap" id="captureArea">
 
   <div class="draft-note" id="draftNote"><span class="dot"></span> טיוטה נשמרת אוטומטית במכשיר זה</div>
+  <div id="signModeBanner" style="display:none;background:#FBEDEE;border:1.5px solid var(--maroon);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-weight:700;color:var(--maroon);">
+    הפרטים מולאו מראש עבורך - נא לבדוק, לחתום למטה וללחוץ "שלח ושמור".
+  </div>
 
   <div class="card">
     <h2>פרטי הלקוח</h2>
@@ -336,7 +339,7 @@
     </div>
   </div>
 
-  <div class="card">
+  <div class="card" id="signCard">
     <h2>אישור וחתימה</h2>
     <label class="declare" for="declareCheck">
       <input type="checkbox" id="declareCheck">
@@ -365,6 +368,7 @@
 
 <div class="actionbar">
   <button class="btn btn-pdf" id="pdfBtn">📄 הפק PDF</button>
+  <button class="btn" id="signLinkBtn" style="background:#25D366;color:#fff;">📤 שלח ללקוח לחתימה</button>
   <button class="btn btn-send" id="sendBtn">✔ שלח ושמור</button>
 </div>
 <div class="toast" id="toast"></div>
@@ -896,6 +900,58 @@ document.getElementById('sendBtn').addEventListener('click', async () => {
   }
 });
 
+// ==== קישור לחתימת לקוח מרחוק ====
+function buildSignUrl() {
+  const d = collectData();
+  d.signerName = '';
+  d.signatureDataUrl = null;
+  d.declare = false;
+  const json = JSON.stringify(d);
+  const encoded = btoa(unescape(encodeURIComponent(json)));
+  return location.origin + location.pathname + '#sign=' + encoded;
+}
+
+document.getElementById('signLinkBtn').addEventListener('click', async () => {
+  const url = buildSignUrl();
+  let copied = false;
+  try {
+    await navigator.clipboard.writeText(url);
+    copied = true;
+  } catch (e) { /* ignore */ }
+  showToast(copied ? 'הקישור הועתק - שלח אותו ללקוח ✔' : 'הקישור נוצר (לא ניתן להעתיק אוטומטית)');
+  window.open('https://wa.me/?text=' + encodeURIComponent('שלום, נא לבדוק ולחתום על סיכום המוצרים והמחירים בקישור הבא: ' + url), '_blank');
+});
+
+function lockFormForSigning() {
+  const area = document.getElementById('captureArea');
+  const signCard = document.getElementById('signCard');
+  area.querySelectorAll('input, select, textarea, button').forEach(el => {
+    if (signCard.contains(el)) return;
+    el.disabled = true;
+  });
+  document.querySelectorAll('.remove-btn').forEach(el => el.style.display = 'none');
+  const addBtn = document.getElementById('addProduct');
+  if (addBtn) addBtn.style.display = 'none';
+  const signLinkBtn = document.getElementById('signLinkBtn');
+  if (signLinkBtn) signLinkBtn.style.display = 'none';
+  document.getElementById('signModeBanner').style.display = 'block';
+}
+
+function tryLoadSignLink() {
+  if (!location.hash.startsWith('#sign=')) return false;
+  try {
+    const encoded = location.hash.slice('#sign='.length);
+    const json = decodeURIComponent(escape(atob(encoded)));
+    const data = JSON.parse(json);
+    applyData(data);
+    lockFormForSigning();
+    return true;
+  } catch (e) {
+    console.error('sign link parse failed', e);
+    return false;
+  }
+}
+
 // ==== אתחול ====
 (function init() {
   document.getElementById('formDate').value = new Date().toISOString().slice(0, 10);
@@ -903,7 +959,7 @@ document.getElementById('sendBtn').addEventListener('click', async () => {
   toggleCardBlock();
   togglePaymentDays();
   syncDeliveryAddress();
-  loadDraft();
+  if (!tryLoadSignLink()) loadDraft();
 })();
 </script>
 </body>
