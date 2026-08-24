@@ -549,12 +549,10 @@ function addProduct(data = {}) {
       <span class="arrow">▼ הצג</span>
     </div>
     <div class="product-body">
-    <div class="field">
+    <div class="field" style="position:relative;">
       <label class="req">שם המוצר</label>
-      <input type="text" class="f-name" list="productNameList_${id}" value="${data.name||''}">
-      <datalist id="productNameList_${id}">
-        ${PRODUCT_NAME_LIST.map(n => `<option value="${n}">`).join('')}
-      </datalist>
+      <input type="text" class="f-name" autocomplete="off" value="${data.name||''}">
+      <div class="name-suggestions" style="display:none;position:absolute;z-index:20;top:100%;right:0;left:0;background:#fff;border:1.5px solid var(--line);border-radius:9px;margin-top:4px;max-height:200px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.12);"></div>
     </div>
     <div class="row2">
       <div class="field">
@@ -685,7 +683,41 @@ productsList.addEventListener('input', (e) => {
     const num = el.querySelector('.num').textContent;
     const nameVal = e.target.value.trim();
     if (summaryTextEl) summaryTextEl.textContent = num + (nameVal ? ' — ' + nameVal : '');
+    showNameSuggestions(e.target);
   }
+});
+
+function showNameSuggestions(input) {
+  const box = input.closest('.field').querySelector('.name-suggestions');
+  const query = input.value.trim().toLowerCase();
+  const matches = query
+    ? PRODUCT_NAME_LIST.filter(n => n.toLowerCase().includes(query))
+    : PRODUCT_NAME_LIST;
+  if (matches.length === 0) { box.style.display = 'none'; return; }
+  box.innerHTML = matches.map(n =>
+    `<div class="name-suggestion-item" style="padding:10px 12px;cursor:pointer;font-size:14px;border-bottom:1px solid var(--line);">${n}</div>`
+  ).join('');
+  box.style.display = 'block';
+}
+
+productsList.addEventListener('focusin', (e) => {
+  if (e.target.classList.contains('f-name')) showNameSuggestions(e.target);
+});
+
+productsList.addEventListener('click', (e) => {
+  const item = e.target.closest('.name-suggestion-item');
+  if (!item) return;
+  const box = item.closest('.name-suggestions');
+  const input = box.closest('.field').querySelector('.f-name');
+  input.value = item.textContent;
+  box.style.display = 'none';
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+});
+
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('f-name')) return;
+  if (e.target.closest('.name-suggestions')) return;
+  document.querySelectorAll('.name-suggestions').forEach(box => { box.style.display = 'none'; });
 });
 
 function renumber() {
