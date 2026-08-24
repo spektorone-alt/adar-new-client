@@ -73,7 +73,23 @@
     border-bottom:2px solid var(--line);
     display:flex;align-items:center;justify-content:space-between;
   }
+  .wizard-step h2{
+    font-size:23px;
+    cursor:pointer;
+    user-select:none;
+  }
+  .wizard-step:not(.active) > *:not(h2){display:none;}
+  .wizard-step{transition:border-color .2s, background .2s;}
+  .wizard-step.active{border-color:var(--maroon);border-width:2px;}
+  .wizard-step.complete{border-color:#3E8E5A;}
+  .wizard-step.complete:not(.active) h2{color:#3E8E5A;}
+  .wizard-check{
+    display:none;width:28px;height:28px;border-radius:50%;background:#3E8E5A;color:#fff;
+    align-items:center;justify-content:center;font-size:15px;font-weight:800;flex-shrink:0;
+  }
+  .wizard-step.complete .wizard-check{display:flex;}
   .field{margin-bottom:12px;}
+  input.invalid, select.invalid{border-color:var(--err) !important;}
   label{
     display:block;font-size:13px;font-weight:600;color:var(--ink);
     margin-bottom:5px;
@@ -83,6 +99,16 @@
     font-family:'Assistant',sans-serif;font-size:14.5px;color:var(--ink);
     background:#FFFDFA;transition:border-color .15s;
   }
+  input[type=time]{direction:ltr;text-align:right;}
+  input[type=file]{
+    padding:12px;font-size:14px;
+  }
+  input[type=file]::file-selector-button{
+    padding:12px 18px;font-size:14.5px;font-weight:700;
+    border:none;border-radius:9px;background:var(--maroon);color:#fff;
+    cursor:pointer;margin-left:10px;font-family:'Assistant',sans-serif;
+  }
+  input[type=file]::file-selector-button:hover{background:var(--maroon-dark);}
   input:focus,textarea:focus,select:focus{outline:none;border-color:var(--maroon);}
   textarea{resize:vertical;min-height:64px;}
   .row3{display:grid;grid-template-columns:1fr;gap:10px;}
@@ -207,77 +233,75 @@
     הפרטים מולאו מראש עבורך - נא לבדוק, לחתום למטה וללחוץ "שלח ושמור".
   </div>
 
-  <div class="card">
-    <h2>פרטי הלקוח</h2>
+  <div class="card wizard-step" data-step="0">
+    <h2>פרטי הלקוח<span class="wizard-check">✓</span></h2>
     <div class="field">
       <label class="req">שם הלקוח / העסק</label>
       <input type="text" id="customerName" placeholder="לדוגמה: מאפיית השכונה בע״מ">
     </div>
     <div class="field">
-      <label>ח.פ / עוסק מורשה</label>
+      <label class="req">ח.פ / עוסק מורשה</label>
       <input type="text" id="customerBusinessId" inputmode="numeric" placeholder="מספר ח.פ / עוסק מורשה">
     </div>
     <div class="row2">
       <div class="field">
-        <label>איש קשר</label>
+        <label class="req">איש קשר</label>
         <input type="text" id="contactName">
       </div>
       <div class="field">
-        <label>טלפון</label>
+        <label class="req">טלפון</label>
         <input type="tel" id="contactPhone" inputmode="tel">
       </div>
     </div>
     <div class="field">
       <label class="req">כתובת מייל</label>
       <input type="email" id="customerEmail" placeholder="example@mail.com">
+      <div id="customerEmailErr" style="display:none;color:var(--err);font-size:12px;margin-top:4px;">כתובת המייל לא תקינה</div>
     </div>
     <div class="field">
-      <label>עיר</label>
+      <label class="req">עיר</label>
       <input type="text" id="customerCity" list="citiesList" placeholder="התחילו להקליד לחיפוש...">
       <datalist id="citiesList"></datalist>
     </div>
     <div class="addr-row">
       <div class="field">
-        <label>רחוב</label>
+        <label class="req">רחוב</label>
         <input type="text" id="customerStreet" list="streetsList" placeholder="בחרו עיר תחילה">
         <datalist id="streetsList"></datalist>
       </div>
       <div class="field">
-        <label>מספר</label>
+        <label class="req">מספר</label>
         <input type="text" id="customerHouseNum" inputmode="numeric" placeholder="5">
       </div>
     </div>
     <input type="hidden" id="formDate">
   </div>
 
-  <div class="card">
-    <h2>תיאור מוצרים <span style="font-size:12px;color:var(--muted);font-weight:400;">מס׳ מוצרים: <span id="prodCount">0</span></span></h2>
+  <div class="card wizard-step" data-step="1">
+    <h2>תיאור מוצרים <span style="font-size:12px;color:var(--muted);font-weight:400;">מס׳ מוצרים: <span id="prodCount">0</span></span><span class="wizard-check">✓</span></h2>
     <div id="productsList"></div>
     <button type="button" class="add-btn" id="addProduct">+ הוסף מוצר</button>
   </div>
 
-  <div class="card">
-    <h2>תנאים כלליים</h2>
+  <div class="card wizard-step" data-step="2">
+    <h2>תנאי עבודה ותשלום<span class="wizard-check">✓</span></h2>
     <div class="field">
+      <label>תנאים כלליים</label>
       <textarea id="generalTerms" placeholder="הערות והסכמות נוספות..."></textarea>
     </div>
-  </div>
-
-  <div class="card">
-    <h2>תנאי עבודה ותשלום</h2>
     <div class="row2">
       <div class="field">
-        <label>תחילת עבודה</label>
+        <label class="req">תחילת עבודה</label>
         <input type="date" id="workStart">
       </div>
       <div class="field">
-        <label>משך ההתקשרות (חודשים)</label>
+        <label class="req">משך ההתקשרות (חודשים)</label>
         <input type="number" id="contractMonths" min="0">
       </div>
     </div>
     <div class="row2">
       <div class="field">
-        <label>תנאי תשלום</label>
+        <label class="req">תנאי תשלום</label>
         <select id="paymentMethod">
           <option value="מזומן (במועד ההזמנה)">מזומן (במועד ההזמנה)</option>
           <option value="העברה">העברה</option>
@@ -287,7 +311,7 @@
         </select>
       </div>
       <div class="field" id="paymentDaysWrap">
-        <label>ימי שוטף</label>
+        <label class="req">ימי שוטף</label>
         <input type="number" id="paymentDays" min="0" placeholder="לדוגמה: 10">
         <div class="hint" id="paymentDaysHint"></div>
       </div>
@@ -300,25 +324,33 @@
       </div>
       <div class="row2">
         <div class="field">
-          <label>שם בעל הכרטיס</label>
+          <label class="req">שם בעל הכרטיס</label>
           <input type="text" id="cardHolder">
         </div>
         <div class="field">
-          <label>4 ספרות אחרונות</label>
+          <label class="req">4 ספרות אחרונות</label>
           <input type="text" id="cardLast4" maxlength="4" inputmode="numeric" placeholder="0000">
         </div>
       </div>
       <div class="field">
-        <label>תוקף (MM/YY)</label>
+        <label class="req">תוקף (MM/YY)</label>
         <input type="text" id="cardExpiry" maxlength="5" placeholder="MM/YY" style="max-width:140px;">
       </div>
     </div>
   </div>
 
-  <div class="card">
-    <h2>משלוחים</h2>
+  <div class="card wizard-step" data-step="3">
+    <h2>משלוחים<span class="wizard-check">✓</span></h2>
     <div class="field">
-      <label>ימי משלוח</label>
+      <label class="req">לוגיסטיקה</label>
+      <div class="toggle-group">
+        <button type="button" class="toggle-btn logistics-btn" data-val="הובלה">הובלה</button>
+        <button type="button" class="toggle-btn logistics-btn" data-val="הפצה">הפצה</button>
+      </div>
+      <input type="hidden" id="logistics" value="">
+    </div>
+    <div class="field">
+      <label class="req">ימי משלוח</label>
       <div class="days" id="daysGroup">
         <label class="day-chip"><input type="checkbox" value="א׳"> א׳</label>
         <label class="day-chip"><input type="checkbox" value="ב׳"> ב׳</label>
@@ -327,30 +359,41 @@
         <label class="day-chip"><input type="checkbox" value="ה׳"> ה׳</label>
       </div>
     </div>
-    <div class="row2">
-      <div class="field">
-        <label>שעות מועדפות - משעה</label>
-        <input type="time" id="preferredHoursFrom">
-      </div>
-      <div class="field">
-        <label>שעות מועדפות - עד שעה</label>
-        <input type="time" id="preferredHoursTo">
+    <div class="field">
+      <label style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:5px;display:block;">שעות מועדפות</label>
+      <div class="toggle-group">
+        <input type="time" id="preferredHoursFrom" style="flex:1;padding:8px;border:1.5px solid var(--line);border-radius:9px;background:#FFFDFA;color:var(--ink);font-family:'Assistant',sans-serif;font-size:13px;min-width:0;">
+        <input type="time" id="preferredHoursTo" style="flex:1;padding:8px;border:1.5px solid var(--line);border-radius:9px;background:#FFFDFA;color:var(--ink);font-family:'Assistant',sans-serif;font-size:13px;min-width:0;">
       </div>
     </div>
-    <div class="field">
+    <div class="field" style="margin-top:18px;">
       <label class="chk-inline">
         <input type="checkbox" id="sameAddressCheck" checked>
         <span>כתובת המשלוח זהה לכתובת העסק</span>
       </label>
     </div>
     <div class="field" id="deliveryAddressWrap" style="display:none;">
-      <label>כתובת למשלוח</label>
+      <label class="req">כתובת למשלוח</label>
       <input type="text" id="deliveryAddress" placeholder="רחוב, מספר, עיר">
     </div>
   </div>
 
-  <div class="card" id="signCard">
-    <h2>אישור וחתימה</h2>
+  <div class="card wizard-step" data-step="4" id="idVerifyCard">
+    <h2>אימות זהות<span class="wizard-check">✓</span></h2>
+    <div class="field">
+      <label class="req">צילום תעודת זהות וספח</label>
+      <input type="file" id="idCardInput" accept="image/*" capture="environment">
+      <img id="idCardPreview" style="display:none;max-width:100%;max-height:220px;margin-top:8px;border:1.5px solid var(--line);border-radius:9px;">
+    </div>
+    <div class="field">
+      <label class="req">צילום תעודת התאגדות / תעודת עוסק מורשה</label>
+      <input type="file" id="bizDocInput" accept="image/*" capture="environment">
+      <img id="bizDocPreview" style="display:none;max-width:100%;max-height:220px;margin-top:8px;border:1.5px solid var(--line);border-radius:9px;">
+    </div>
+  </div>
+
+  <div class="card wizard-step" data-step="5" id="signCard">
+    <h2>אישור וחתימה<span class="wizard-check">✓</span></h2>
     <label class="declare" for="declareCheck">
       <input type="checkbox" id="declareCheck">
       <span>אני מאשר/ת כי הפרטים לעיל נכונים, ומתחייב/ת לעמוד בתנאי התשלום וההתקשרות שנקבעו עם החברה.</span>
@@ -414,6 +457,20 @@
   <div class="pdf-section">
     <div class="pdf-section-title">תנאי תשלום</div>
     <div class="pdf-grid" id="pdf-payment-grid"></div>
+  </div>
+
+  <div class="pdf-section" id="pdf-idverify-section">
+    <div class="pdf-section-title">מסמכי זיהוי מצורפים</div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:200px;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">תעודת זהות וספח</div>
+        <img id="pdf-idcard-img" style="width:100%;max-height:260px;object-fit:contain;border:1px solid var(--line);border-radius:6px;">
+      </div>
+      <div style="flex:1;min-width:200px;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">תעודת התאגדות / עוסק מורשה</div>
+        <img id="pdf-bizdoc-img" style="width:100%;max-height:260px;object-fit:contain;border:1px solid var(--line);border-radius:6px;">
+      </div>
+    </div>
   </div>
 
   <div class="pdf-section">
@@ -481,6 +538,8 @@ function addProduct(data = {}) {
   const isCustomWeight = weightVal && !WEIGHT_LIST.map(String).includes(String(weightVal));
   const weightSelectVal = isCustomWeight ? 'אחר' : weightVal;
   const baked = data.baked || 'לא';
+  const singlePack = data.singlePack || 'לא';
+  const packType = data.packType || '';
 
   div.innerHTML = `
     <span class="num">מוצר ${productSeq}</span>
@@ -491,7 +550,7 @@ function addProduct(data = {}) {
     </div>
     <div class="product-body">
     <div class="field">
-      <label>שם המוצר</label>
+      <label class="req">שם המוצר</label>
       <input type="text" class="f-name" list="productNameList_${id}" value="${data.name||''}">
       <datalist id="productNameList_${id}">
         ${PRODUCT_NAME_LIST.map(n => `<option value="${n}">`).join('')}
@@ -499,14 +558,14 @@ function addProduct(data = {}) {
     </div>
     <div class="row2">
       <div class="field">
-        <label>חומר גלם</label>
+        <label class="req">חומר גלם</label>
         <select class="f-rm">
           <option value="">בחר...</option>
           ${optionsHtml(RM_LIST, data.rm)}
         </select>
       </div>
       <div class="field">
-        <label>משקל (גרם)</label>
+        <label class="req">משקל (גרם)</label>
         <select class="f-weight">
           <option value="">בחר...</option>
           ${optionsHtml(WEIGHT_LIST, isCustomWeight ? null : Number(weightVal))}
@@ -517,13 +576,13 @@ function addProduct(data = {}) {
     </div>
     <div class="row2">
       <div class="field">
-        <label>כמות חודשית</label>
+        <label class="req">כמות חודשית</label>
         <input type="text" class="f-qty" inputmode="numeric" value="${data.qty||''}">
       </div>
     </div>
     <div class="row2">
       <div class="field">
-        <label>אפוי</label>
+        <label class="req">אפוי</label>
         <div class="toggle-group">
           <button type="button" class="toggle-btn f-baked-btn ${baked === 'כן' ? 'active' : ''}" data-val="כן">כן</button>
           <button type="button" class="toggle-btn f-baked-btn ${baked === 'לא' ? 'active' : ''}" data-val="לא">לא</button>
@@ -531,13 +590,38 @@ function addProduct(data = {}) {
         <input type="hidden" class="f-baked" value="${baked}">
       </div>
       <div class="field f-bakelevel-wrap" style="${baked === 'כן' ? '' : 'display:none;'}">
-        <label>מידת אפייה</label>
+        <label class="req">מידת אפייה</label>
         <select class="f-bakelevel">
           ${optionsHtml(BAKE_LEVELS, data.bakeLevel)}
         </select>
       </div>
     </div>
-    <div class="field field-narrow"><label>מחיר (₪)</label><input type="text" class="f-price" inputmode="decimal" value="${data.price||''}"></div>
+    <div class="row2">
+      <div class="field">
+        <label class="req">סוג אריזה</label>
+        <select class="f-packtype">
+          <option value="">בחר...</option>
+          <option value="שק" ${packType === 'שק' ? 'selected' : ''}>שק</option>
+          <option value="קרטון" ${packType === 'קרטון' ? 'selected' : ''}>קרטון</option>
+        </select>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label class="req">אריזה בודדת</label>
+        <div class="toggle-group">
+          <button type="button" class="toggle-btn f-singlepack-btn ${singlePack === 'כן' ? 'active' : ''}" data-val="כן">כן</button>
+          <button type="button" class="toggle-btn f-singlepack-btn ${singlePack === 'לא' ? 'active' : ''}" data-val="לא">לא</button>
+        </div>
+        <input type="hidden" class="f-singlepack" value="${singlePack}">
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field field-narrow">
+        <label class="req">מחיר (₪)</label>
+        <input type="text" class="f-price" inputmode="decimal" value="${data.price||''}">
+      </div>
+    </div>
     </div>
   `;
   // מזערים את שאר המוצרים הקיימים כדי שלא יצטרכו לגלול דרך כולם
@@ -561,6 +645,16 @@ productsList.addEventListener('change', (e) => {
   }
 });
 
+document.querySelectorAll('.logistics-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.logistics-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('logistics').value = btn.dataset.val;
+    scheduleDraftSave();
+    checkAutoAdvance();
+  });
+});
+
 productsList.addEventListener('click', (e) => {
   const btn = e.target.closest('.f-baked-btn');
   if (!btn) return;
@@ -570,6 +664,17 @@ productsList.addEventListener('click', (e) => {
   const product = btn.closest('.product');
   product.querySelector('.f-baked').value = btn.dataset.val;
   product.querySelector('.f-bakelevel-wrap').style.display = btn.dataset.val === 'כן' ? '' : 'none';
+  scheduleDraftSave();
+});
+
+productsList.addEventListener('click', (e) => {
+  const btn = e.target.closest('.f-singlepack-btn');
+  if (!btn) return;
+  const group = btn.closest('.toggle-group');
+  group.querySelectorAll('.f-singlepack-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const product = btn.closest('.product');
+  product.querySelector('.f-singlepack').value = btn.dataset.val;
   scheduleDraftSave();
 });
 
@@ -701,6 +806,54 @@ document.querySelectorAll('.day-chip input').forEach(cb => {
   });
 });
 
+// ==== אימות זהות - העלאת/צילום תעודות ====
+let idCardDataUrl = null;
+let bizDocDataUrl = null;
+
+function readImageAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    // מקטין תמונות גדולות (מצלמת נייד) כדי לא לנפח את הטיוטה/PDF/שליחה
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const maxW = 1400;
+        const scale = Math.min(1, maxW / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function setupIdUpload(inputId, previewId, setter) {
+  document.getElementById(inputId).addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const dataUrl = await readImageAsDataUrl(file);
+      setter(dataUrl);
+      const img = document.getElementById(previewId);
+      img.src = dataUrl;
+      img.style.display = 'block';
+      scheduleDraftSave();
+      checkAutoAdvance();
+    } catch (err) {
+      showToast('שגיאה בטעינת התמונה - נסו שוב', true);
+    }
+  });
+}
+setupIdUpload('idCardInput', 'idCardPreview', (v) => { idCardDataUrl = v; });
+setupIdUpload('bizDocInput', 'bizDocPreview', (v) => { bizDocDataUrl = v; });
+
 // ==== חתימה (canvas) ====
 const canvas = document.getElementById('sigPad');
 const ctx = canvas.getContext('2d');
@@ -731,7 +884,7 @@ function move(e) {
   ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(p.x, p.y); ctx.stroke();
   lastX = p.x; lastY = p.y; sigDrawn = true; e.preventDefault();
 }
-function end() { if(drawing){drawing = false; scheduleDraftSave();} }
+function end() { if(drawing){drawing = false; scheduleDraftSave(); checkAutoAdvance();} }
 canvas.addEventListener('mousedown', start);
 canvas.addEventListener('mousemove', move);
 window.addEventListener('mouseup', end);
@@ -759,6 +912,8 @@ function collectData() {
       bakeLevel: baked === 'כן' ? el.querySelector('.f-bakelevel').value : '',
       qty: el.querySelector('.f-qty').value,
       price: el.querySelector('.f-price').value,
+      packType: el.querySelector('.f-packtype').value,
+      singlePack: el.querySelector('.f-singlepack').value,
     };
   });
   const days = [...document.querySelectorAll('.day-chip input:checked')].map(cb => cb.value);
@@ -783,6 +938,7 @@ function collectData() {
     cardLast4: document.getElementById('cardLast4').value,
     cardExpiry: document.getElementById('cardExpiry').value,
     days,
+    logistics: document.getElementById('logistics').value,
     preferredHours: (() => {
       const from = document.getElementById('preferredHoursFrom').value;
       const to = document.getElementById('preferredHoursTo').value;
@@ -793,6 +949,8 @@ function collectData() {
     declare: document.getElementById('declareCheck').checked,
     signerName: document.getElementById('signerName').value,
     signatureDataUrl: sigDrawn ? canvas.toDataURL('image/png') : null,
+    idCardDataUrl: idCardDataUrl,
+    bizDocDataUrl: bizDocDataUrl,
   };
 }
 
@@ -800,6 +958,18 @@ function applyData(d) {
   if (!d) return;
   document.getElementById('customerName').value = d.customerName || '';
   document.getElementById('customerBusinessId').value = d.customerBusinessId || '';
+  if (d.idCardDataUrl) {
+    idCardDataUrl = d.idCardDataUrl;
+    const img = document.getElementById('idCardPreview');
+    img.src = d.idCardDataUrl;
+    img.style.display = 'block';
+  }
+  if (d.bizDocDataUrl) {
+    bizDocDataUrl = d.bizDocDataUrl;
+    const img = document.getElementById('bizDocPreview');
+    img.src = d.bizDocDataUrl;
+    img.style.display = 'block';
+  }
   document.getElementById('contactName').value = d.contactName || '';
   document.getElementById('contactPhone').value = d.contactPhone || '';
   document.getElementById('customerEmail').value = d.customerEmail || '';
@@ -828,6 +998,10 @@ function applyData(d) {
   syncDeliveryAddress();
   document.getElementById('declareCheck').checked = !!d.declare;
   document.getElementById('signerName').value = d.signerName || '';
+  document.getElementById('logistics').value = d.logistics || '';
+  document.querySelectorAll('.logistics-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.val === d.logistics);
+  });
 
   (d.days || []).forEach(val => {
     const cb = [...document.querySelectorAll('.day-chip input')].find(c => c.value === val);
@@ -896,6 +1070,19 @@ function populatePdfTemplate(d) {
   document.getElementById('pdf-logo-img').src = document.querySelector('.badge').src;
   document.getElementById('pdf-doc-date').textContent = 'תאריך: ' + (d.formDate || '');
 
+  const idSection = document.getElementById('pdf-idverify-section');
+  const idImgEl = document.getElementById('pdf-idcard-img');
+  const bizImgEl = document.getElementById('pdf-bizdoc-img');
+  if (d.idCardDataUrl || d.bizDocDataUrl) {
+    idSection.style.display = 'block';
+    idImgEl.src = d.idCardDataUrl || '';
+    idImgEl.style.visibility = d.idCardDataUrl ? 'visible' : 'hidden';
+    bizImgEl.src = d.bizDocDataUrl || '';
+    bizImgEl.style.visibility = d.bizDocDataUrl ? 'visible' : 'hidden';
+  } else {
+    idSection.style.display = 'none';
+  }
+
   const custRows = [
     gridRow('שם לקוח / עסק', d.customerName),
     gridRow('ח.פ / עוסק מורשה', d.customerBusinessId),
@@ -906,7 +1093,7 @@ function populatePdfTemplate(d) {
   ].join('');
   document.getElementById('pdf-customer-grid').innerHTML = custRows;
 
-  const prodHeader = `<tr><th>#</th><th>שם מוצר</th><th>חומר גלם</th><th>משקל (גרם)</th><th>אפוי</th><th>מידת אפייה</th><th>כמות חודשית</th><th>מחיר (₪)</th></tr>`;
+  const prodHeader = `<tr><th>#</th><th>שם מוצר</th><th>חומר גלם</th><th>משקל (גרם)</th><th>אפוי</th><th>מידת אפייה</th><th>כמות חודשית</th><th>מחיר (₪)</th><th>סוג אריזה</th><th>אריזה בודדת</th></tr>`;
   const prodRows = (d.products || []).map((p, i) => `
     <tr>
       <td>${i + 1}</td>
@@ -917,6 +1104,8 @@ function populatePdfTemplate(d) {
       <td>${escapeHtml(p.baked === 'כן' ? p.bakeLevel : '')}</td>
       <td>${escapeHtml(p.qty)}</td>
       <td>${escapeHtml(p.price)}</td>
+      <td>${escapeHtml(p.packType)}</td>
+      <td>${escapeHtml(p.singlePack)}</td>
     </tr>`).join('');
   document.getElementById('pdf-products-table').innerHTML = prodHeader + prodRows;
 
@@ -929,6 +1118,7 @@ function populatePdfTemplate(d) {
   }
 
   const logisticsRows = [
+    gridRow('לוגיסטיקה', d.logistics),
     gridRow('תחילת עבודה', d.workStart),
     gridRow('משך התקשרות', d.contractMonths ? d.contractMonths + ' חודשים' : ''),
     gridRow('ימי אספקה', (d.days || []).join(', ')),
@@ -1002,8 +1192,49 @@ document.getElementById('pdfBtn').addEventListener('click', async () => {
 document.getElementById('sendBtn').addEventListener('click', async () => {
   const data = collectData();
   if (!data.customerName) { showToast('נא למלא שם לקוח', true); return; }
+  if (!data.customerBusinessId) { showToast('נא למלא ח.פ / עוסק מורשה', true); return; }
+  if (!data.contactName) { showToast('נא למלא שם איש קשר', true); return; }
+  if (!data.contactPhone) { showToast('נא למלא טלפון', true); return; }
   if (!data.customerEmail) { showToast('נא למלא כתובת מייל של הלקוח', true); return; }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.customerEmail)) { showToast('כתובת המייל לא תקינה', true); return; }
+  if (!data.customerCity) { showToast('נא למלא עיר', true); return; }
+  if (!document.getElementById('customerStreet').value) { showToast('נא למלא רחוב', true); return; }
+  if (!document.getElementById('customerHouseNum').value) { showToast('נא למלא מספר בית', true); return; }
+
+  if (!data.products || data.products.length === 0) { showToast('נא להוסיף לפחות מוצר אחד', true); return; }
+  for (let i = 0; i < data.products.length; i++) {
+    const p = data.products[i];
+    const label = 'מוצר ' + (i + 1);
+    if (!p.name) { showToast(`${label}: נא למלא שם מוצר`, true); return; }
+    if (!p.rm) { showToast(`${label}: נא לבחור חומר גלם`, true); return; }
+    if (!p.weight) { showToast(`${label}: נא למלא משקל`, true); return; }
+    if (!p.qty) { showToast(`${label}: נא למלא כמות חודשית`, true); return; }
+    if (!p.price) { showToast(`${label}: נא למלא מחיר`, true); return; }
+    if (!p.packType) { showToast(`${label}: נא לבחור סוג אריזה`, true); return; }
+  }
+
+  if (!data.workStart) { showToast('נא למלא תאריך תחילת עבודה', true); return; }
+  if (!data.contractMonths) { showToast('נא למלא משך התקשרות', true); return; }
+
+  const paymentMethod = document.getElementById('paymentMethod').value;
+  if (paymentMethodEl.value !== 'מזומן (במועד ההזמנה)' && !data.paymentDays) {
+    showToast('נא למלא פירוט תשלום (שוטף + כמה ימים)', true); return;
+  }
+  if (paymentMethod === 'כרטיס אשראי') {
+    if (!data.cardHolder) { showToast('נא למלא שם בעל הכרטיס', true); return; }
+    if (!data.cardLast4) { showToast('נא למלא 4 ספרות אחרונות של הכרטיס', true); return; }
+    if (!data.cardExpiry) { showToast('נא למלא תוקף כרטיס', true); return; }
+  }
+
+  if (!data.logistics) { showToast('נא לבחור לוגיסטיקה (הובלה/הפצה)', true); return; }
+  if (!data.days || data.days.length === 0) { showToast('נא לבחור לפחות יום אספקה אחד', true); return; }
+
+  if (!sameAddressCheck.checked && !data.deliveryAddress) {
+    showToast('נא למלא כתובת משלוח', true); return;
+  }
+
+  if (!data.idCardDataUrl) { showToast('נא לצלם/להעלות תעודת זהות וספח', true); return; }
+  if (!data.bizDocDataUrl) { showToast('נא לצלם/להעלות תעודת התאגדות או עוסק מורשה', true); return; }
   if (!data.declare) { showToast('נא לאשר את ההצהרה', true); return; }
   if (!data.signerName) { showToast('נא למלא שם לקוח לחתימה', true); return; }
   if (!sigDrawn) { showToast('נא לחתום על הטופס', true); return; }
@@ -1049,6 +1280,8 @@ function buildSignUrl() {
   d.signerName = '';
   d.signatureDataUrl = null;
   d.declare = false;
+  d.idCardDataUrl = null;
+  d.bizDocDataUrl = null;
   const json = JSON.stringify(d);
   const encoded = btoa(unescape(encodeURIComponent(json)));
   return location.origin + location.pathname + '#sign=' + encoded;
@@ -1093,8 +1326,9 @@ document.getElementById('signLinkBtn').addEventListener('click', async () => {
 function lockFormForSigning() {
   const area = document.getElementById('captureArea');
   const signCard = document.getElementById('signCard');
+  const idVerifyCard = document.getElementById('idVerifyCard');
   area.querySelectorAll('input, select, textarea, button').forEach(el => {
-    if (signCard.contains(el)) return;
+    if (signCard.contains(el) || idVerifyCard.contains(el)) return;
     el.disabled = true;
   });
   document.querySelectorAll('.remove-btn').forEach(el => el.style.display = 'none');
@@ -1120,14 +1354,122 @@ function tryLoadSignLink() {
   }
 }
 
-// ==== אתחול ====
-(function init() {
+// ==== אשף שלבים (wizard) - כרטיס פעיל אחד, התקדמות אוטומטית ====
+const wizardSteps = [...document.querySelectorAll('.wizard-step')];
+const wizardAdvanced = wizardSteps.map(() => false);
+let wizardCurrentStep = 0;
+
+function emailLooksValid(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v || ''); }
+
+const customerEmailInput = document.getElementById('customerEmail');
+const customerEmailErr = document.getElementById('customerEmailErr');
+function validateEmailField() {
+  const val = customerEmailInput.value.trim();
+  const bad = val.length > 0 && !emailLooksValid(val);
+  customerEmailInput.classList.toggle('invalid', bad);
+  customerEmailErr.style.display = bad ? 'block' : 'none';
+}
+customerEmailInput.addEventListener('input', validateEmailField);
+customerEmailInput.addEventListener('blur', validateEmailField);
+
+function isStepComplete(idx) {
+  if (idx === 0) {
+    return !!(
+      document.getElementById('customerName').value &&
+      document.getElementById('customerBusinessId').value &&
+      document.getElementById('contactName').value &&
+      document.getElementById('contactPhone').value &&
+      emailLooksValid(document.getElementById('customerEmail').value) &&
+      document.getElementById('customerCity').value &&
+      document.getElementById('customerStreet').value &&
+      document.getElementById('customerHouseNum').value
+    );
+  }
+  if (idx === 1) {
+    const rows = [...productsList.querySelectorAll('.product')];
+    if (rows.length === 0) return false;
+    return rows.every(el => {
+      const weightSel = el.querySelector('.f-weight').value;
+      const weight = weightSel === 'אחר' ? el.querySelector('.f-weight-custom').value : weightSel;
+      return el.querySelector('.f-name').value && el.querySelector('.f-rm').value &&
+        weight && el.querySelector('.f-qty').value && el.querySelector('.f-price').value &&
+        el.querySelector('.f-packtype').value && el.querySelector('.f-singlepack').value;
+    });
+  }
+  if (idx === 2) {
+    if (!document.getElementById('workStart').value) return false;
+    if (!document.getElementById('contractMonths').value) return false;
+    if (paymentMethodEl.value !== 'מזומן (במועד ההזמנה)' && !paymentDaysInput.value) return false;
+    if (paymentMethodEl.value === 'כרטיס אשראי') {
+      if (!document.getElementById('cardHolder').value) return false;
+      if (!document.getElementById('cardLast4').value) return false;
+      if (!document.getElementById('cardExpiry').value) return false;
+    }
+    return true;
+  }
+  if (idx === 3) {
+    if (!document.getElementById('logistics').value) return false;
+    const anyDay = [...document.querySelectorAll('.day-chip input')].some(cb => cb.checked);
+    if (!anyDay) return false;
+    if (!sameAddressCheck.checked && !deliveryAddressInput.value) return false;
+    return true;
+  }
+  if (idx === 4) {
+    return !!(idCardDataUrl && bizDocDataUrl);
+  }
+  if (idx === 5) {
+    return !!(document.getElementById('declareCheck').checked && document.getElementById('signerName').value && sigDrawn);
+  }
+  return false;
+}
+
+function openStep(idx) {
+  wizardCurrentStep = idx;
+  wizardSteps.forEach((el, i) => el.classList.toggle('active', i === idx));
+  wizardSteps[idx].scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function refreshStepStates() {
+  wizardSteps.forEach((el, i) => el.classList.toggle('complete', isStepComplete(i)));
+}
+
+function checkAutoAdvance() {
+  const idx = wizardCurrentStep;
+  const complete = isStepComplete(idx);
+  wizardSteps[idx].classList.toggle('complete', complete);
+  if (complete && !wizardAdvanced[idx] && idx < wizardSteps.length - 1) {
+    wizardAdvanced[idx] = true;
+    setTimeout(() => openStep(idx + 1), 350);
+  }
+  if (!complete) {
+    wizardAdvanced[idx] = false;
+  }
+}
+
+wizardSteps.forEach((el, i) => {
+  el.querySelector('h2').addEventListener('click', () => openStep(i));
+});
+
+document.getElementById('captureArea').addEventListener('input', checkAutoAdvance);
+document.getElementById('captureArea').addEventListener('change', checkAutoAdvance);
+document.getElementById('captureArea').addEventListener('click', () => setTimeout(checkAutoAdvance, 0));
+
+function initWizardFromLoadedData() {
+  refreshStepStates();
+  for (let i = 0; i < wizardSteps.length; i++) wizardAdvanced[i] = wizardSteps[i].classList.contains('complete');
+  const firstIncomplete = wizardSteps.findIndex(el => !el.classList.contains('complete'));
+  openStep(firstIncomplete === -1 ? wizardSteps.length - 1 : firstIncomplete);
+}
+
+
+(async function init() {
   document.getElementById('formDate').value = new Date().toISOString().slice(0, 10);
   document.getElementById('workStart').value = new Date().toISOString().slice(0, 10);
   toggleCardBlock();
   togglePaymentDays();
   syncDeliveryAddress();
-  if (!tryLoadSignLink()) loadDraft();
+  if (!tryLoadSignLink()) { await loadDraft(); }
+  initWizardFromLoadedData();
 })();
 </script>
 </body>
