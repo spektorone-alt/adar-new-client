@@ -911,15 +911,40 @@ function buildSignUrl() {
   return location.origin + location.pathname + '#sign=' + encoded;
 }
 
+async function shortenUrl(longUrl) {
+  try {
+    const res = await fetch('https://tinyurl.com/api-create.php?url=' + encodeURIComponent(longUrl));
+    if (!res.ok) return longUrl;
+    const short = (await res.text()).trim();
+    return short.startsWith('http') ? short : longUrl;
+  } catch (e) {
+    return longUrl; // אם הקיצור נכשל (חסימת CORS/רשת), נשלח את הקישור המלא
+  }
+}
+
 document.getElementById('signLinkBtn').addEventListener('click', async () => {
-  const url = buildSignUrl();
+  const btn = document.getElementById('signLinkBtn');
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'מכין קישור...';
+
+  const longUrl = await buildSignUrl();
+  const shortUrl = await shortenUrl(longUrl);
+  const customerName = document.getElementById('customerName').value.trim();
+  const message =
+    `טופס פתיחת לקוח לחתימה${customerName ? ' — ' + customerName : ''} | אדר בצקים\n` +
+    `לחץ כאן לאישור וחתימה:\n${shortUrl}`;
+
   let copied = false;
   try {
-    await navigator.clipboard.writeText(url);
+    await navigator.clipboard.writeText(message);
     copied = true;
   } catch (e) { /* ignore */ }
-  showToast(copied ? 'הקישור הועתק - שלח אותו ללקוח ✔' : 'הקישור נוצר (לא ניתן להעתיק אוטומטית)');
-  window.open('https://wa.me/?text=' + encodeURIComponent('שלום, נא לבדוק ולחתום על סיכום המוצרים והמחירים בקישור הבא: ' + url), '_blank');
+  showToast(copied ? 'ההודעה הועתקה - שלח אותה ללקוח ✔' : 'הקישור נוצר (לא ניתן להעתיק אוטומטית)');
+  window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank');
+
+  btn.disabled = false;
+  btn.textContent = originalText;
 });
 
 function lockFormForSigning() {
