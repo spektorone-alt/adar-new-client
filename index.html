@@ -730,12 +730,14 @@ function scheduleDraftSave() {
   draftTimer = setTimeout(saveDraft, 700);
 }
 async function saveDraft() {
+  if (!window.storage) return;
   try {
     await window.storage.set(DRAFT_KEY, JSON.stringify(collectData()), false);
     document.getElementById('draftNote').innerHTML = '<span class="dot"></span> טיוטה נשמרה';
   } catch (e) { console.error('draft save failed', e); }
 }
 async function loadDraft() {
+  if (!window.storage) { addProduct(); return; }
   try {
     const res = await window.storage.get(DRAFT_KEY, false);
     if (res && res.value) applyData(JSON.parse(res.value));
@@ -830,7 +832,9 @@ document.getElementById('sendBtn').addEventListener('click', async () => {
       // no-cors לא מאפשר לקרוא את התשובה בפועל (תמיד "מוצלח" מבחינת הדפדפן) -
       // יש לבדוק ב-Executions log של ה-Apps Script אם הרישום/המייל אכן הצליחו.
       showToast('נשלח ונשמר בהצלחה ✔ (יש לוודא שהמייל התקבל אצל הלקוח)');
-      await window.storage.delete(DRAFT_KEY, false).catch(() => {});
+      if (window.storage) {
+        await window.storage.delete(DRAFT_KEY, false).catch(() => {});
+      }
     }
   } catch (e) {
     console.error(e);
