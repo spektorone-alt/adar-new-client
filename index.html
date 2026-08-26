@@ -346,6 +346,7 @@
       <div class="toggle-group">
         <button type="button" class="toggle-btn logistics-btn" data-val="הובלה">הובלה</button>
         <button type="button" class="toggle-btn logistics-btn" data-val="הפצה">הפצה</button>
+        <button type="button" class="toggle-btn logistics-btn" data-val="בשער המפעל">בשער המפעל</button>
       </div>
       <input type="hidden" id="logistics" value="">
     </div>
@@ -1469,17 +1470,29 @@ function checkAutoAdvance() {
   const idx = wizardCurrentStep;
   const complete = isStepComplete(idx);
   wizardSteps[idx].classList.toggle('complete', complete);
-  if (complete && !wizardAdvanced[idx] && idx < wizardSteps.length - 1) {
-    wizardAdvanced[idx] = true;
-    setTimeout(() => openStep(idx + 1), 350);
-  }
-  if (!complete) {
-    wizardAdvanced[idx] = false;
-  }
 }
 
 wizardSteps.forEach((el, i) => {
   el.querySelector('h2').addEventListener('click', () => openStep(i));
+});
+
+wizardSteps.forEach((el, i) => {
+  if (i === wizardSteps.length - 1) return; // בשלב האחרון (חתימה) לוחצים "שלח ושמור"
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'wizard-continue-btn';
+  btn.style.cssText = 'margin-top:16px;width:100%;padding:13px;border:none;border-radius:9px;background:var(--maroon);color:#fff;font-weight:700;font-size:15px;cursor:pointer;font-family:"Assistant",sans-serif;';
+  btn.textContent = 'המשך לשלב הבא ←';
+  btn.addEventListener('click', () => {
+    checkAutoAdvance();
+    if (isStepComplete(i)) {
+      el.classList.add('complete');
+      openStep(i + 1);
+    } else {
+      showToast('נא למלא את כל השדות המסומנים בכוכבית בשלב זה', true);
+    }
+  });
+  el.appendChild(btn);
 });
 
 document.getElementById('captureArea').addEventListener('input', checkAutoAdvance);
